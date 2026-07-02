@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weather App — Implementation Plan</title>
+<style>
+  :root {
+    --bg: #f4f7f3;
+    --surface: #ffffff;
+    --ink: #1a2820;
+    --muted: #5c6c62;
+    --line: #dfe6dd;
+    --green-50: #eaf3e6;
+    --green-100: #cfe4c4;
+    --green-300: #7bb865;
+    --green-500: #4a8c3a;
+    --green-600: #3a6f2e;
+    --green-700: #2b5222;
+    --green-hero: linear-gradient(155deg, #6ba85a 0%, #3f7c31 60%, #274d1f 100%);
+    --shadow-sm: 0 1px 2px rgba(30, 50, 30, 0.06);
+    --shadow-md: 0 4px 16px rgba(30, 50, 30, 0.08);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    max-width: 1200px;
+    margin: 0 auto;
+    gap: 32px;
+    padding: 32px 24px;
+  }
+  /* Sidebar */
+  aside {
+    position: sticky;
+    top: 24px;
+    align-self: start;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+  }
+  .side-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px 18px;
+    box-shadow: var(--shadow-sm);
+  }
+  .side-card h2 {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 12px 0;
+  }
+  .side-card ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    counter-reset: phase;
+  }
+  .side-card li {
+    counter-increment: phase;
+    margin-bottom: 4px;
+  }
+  .side-card a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 14px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .side-card a:hover {
+    background: var(--green-50);
+    color: var(--green-700);
+  }
+  .side-card a::before {
+    content: counter(phase);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--green-50);
+    color: var(--green-600);
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .side-jump {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+  .side-jump a {
+    display: block;
+    padding: 6px 10px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+  .side-jump a:hover { background: var(--green-50); color: var(--green-700); }
+
+  /* Main */
+  main { min-width: 0; }
+  .hero {
+    background: var(--green-hero);
+    color: white;
+    border-radius: var(--radius);
+    padding: 36px 32px 32px;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 24px;
+  }
+  .hero .kicker {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    opacity: 0.75;
+    margin-bottom: 8px;
+  }
+  .hero h1 {
+    font-size: 32px;
+    line-height: 1.15;
+    margin: 0 0 8px 0;
+    font-weight: 600;
+  }
+  .hero p {
+    margin: 0;
+    opacity: 0.85;
+    font-size: 15px;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 24px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    font-size: 13px;
+  }
+  .hero-meta > div { opacity: 0.85; }
+  .hero-meta strong { font-weight: 600; opacity: 1; display: block; margin-bottom: 2px; }
+
+  /* Section cards */
+  section.card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+    scroll-margin-top: 20px;
+  }
+  section.card > h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section.card > h2 .badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    background: var(--green-50);
+    color: var(--green-700);
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  section.card > .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+  section.card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 20px 0 10px 0;
+    color: var(--green-700);
+  }
+  section.card p { margin: 0 0 12px 0; }
+
+  /* Decision table */
+  table.decisions {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  table.decisions tr { border-bottom: 1px solid var(--line); }
+  table.decisions tr:last-child { border-bottom: none; }
+  table.decisions td {
+    padding: 10px 12px;
+    vertical-align: top;
+  }
+  table.decisions td:first-child {
+    font-weight: 600;
+    color: var(--green-700);
+    width: 30%;
+  }
+
+  /* Checkable steps */
+  ol.steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    counter-reset: step;
+  }
+  ol.steps li {
+    counter-increment: step;
+    padding: 10px 12px 10px 42px;
+    position: relative;
+    border-radius: 8px;
+    transition: background 0.12s;
+    font-size: 14.5px;
+  }
+  ol.steps li:hover { background: var(--green-50); }
+  ol.steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 10px;
+    top: 12px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--green-100);
+    color: var(--green-700);
+    font-weight: 700;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  ol.steps code {
+    background: var(--green-50);
+    color: var(--green-700);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+  }
+
+  /* Verification checklist */
+  ul.verify {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0 0 0;
+    background: var(--green-50);
+    border-radius: 10px;
+    padding: 14px 16px;
+    border: 1px solid var(--green-100);
+  }
+  ul.verify li {
+    padding: 6px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    user-select: none;
+  }
+  ul.verify li::before {
+    content: "";
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid var(--green-500);
+    background: white;
+    flex-shrink: 0;
+    margin-top: 2px;
+    transition: background 0.15s;
+  }
+  ul.verify li.checked::before {
+    background: var(--green-500);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'><path d='M6.5 10.5L4 8l-1 1 3.5 3.5L14 5l-1-1z'/></svg>");
+    background-size: 14px;
+    background-repeat: no-repeat;
+    background-position: center;
+  }
+  ul.verify li.checked { color: var(--muted); text-decoration: line-through; }
+
+  /* File tree */
+  pre.tree {
+    background: #1a2820;
+    color: #e8efe4;
+    padding: 20px 22px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-x: auto;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    margin: 0;
+  }
+  pre.tree .comment { color: #8fa38a; }
+  pre.tree .dir { color: #a8d296; font-weight: 600; }
+
+  details {
+    margin: 12px 0;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 0;
+    background: #fafbf9;
+  }
+  details > summary {
+    padding: 12px 16px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--green-700);
+    font-size: 14px;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    list-style: none;
+  }
+  details > summary::-webkit-details-marker { display: none; }
+  details > summary::before {
+    content: "▸";
+    transition: transform 0.15s;
+    color: var(--green-500);
+  }
+  details[open] > summary::before { transform: rotate(90deg); }
+  details > div { padding: 0 16px 16px; }
+
+  .risk-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .risk-list li {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+  }
+  .risk-list li:last-child { border-bottom: none; }
+  .risk-list strong { color: var(--green-700); display: block; margin-bottom: 4px; }
+
+  .callout {
+    background: var(--green-50);
+    border-left: 3px solid var(--green-500);
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  .callout strong { color: var(--green-700); }
+
+  .footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* Reset button */
+  .reset-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--green-600);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    font-weight: 600;
+  }
+  .reset-btn:hover { background: var(--green-700); }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    aside { position: static; max-height: none; }
+    .hero { padding: 28px 22px; }
+    .hero h1 { font-size: 26px; }
+    section.card { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <aside>
+    <div class="side-card">
+      <h2>Phases</h2>
+      <ol>
+        <li><a href="#phase-0">Foundation</a></li>
+        <li><a href="#phase-1">Data + Default City</a></li>
+        <li><a href="#phase-2">Tile Grid</a></li>
+        <li><a href="#phase-3">Search + Recents</a></li>
+        <li><a href="#phase-4">Polish</a></li>
+        <li><a href="#phase-5">Testing</a></li>
+        <li><a href="#phase-6">Ship</a></li>
+      </ol>
+      <div class="side-jump">
+        <a href="#decisions">Decisions</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#handoff">Handoff to Thena</a>
+        <a href="#risks">Risks</a>
+        <a href="#success">Success criteria</a>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+
+    <div class="hero">
+      <div class="kicker">Implementation Plan</div>
+      <h1>Weather App</h1>
+      <p>Publicly-facing weather app. Core + polish first, stretch goals later.</p>
+      <div class="hero-meta">
+        <div><strong>Author</strong>Thena</div>
+        <div><strong>Exercise from</strong>Johnny, 01/28/26</div>
+        <div><strong>Plan date</strong>2026-07-01</div>
+        <div><strong>Stack</strong>React · Vite · TS · Tailwind · Shadcn</div>
+      </div>
+    </div>
+
+    <section class="card" id="decisions">
+      <h2>Locked Decisions <span class="badge">Brainstorm output</span></h2>
+      <div class="subtitle">Everything below is decided. Change any of these and the plan needs a revisit.</div>
+      <table class="decisions">
+        <tr><td>Frontend</td><td>React + Vite + TypeScript</td></tr>
+        <tr><td>Styling</td><td>Tailwind CSS + Shadcn/UI</td></tr>
+        <tr><td>Weather API</td><td>Open-Meteo (free, no key, includes geocoding)</td></tr>
+        <tr><td>Weather icons</td><td>Meteocons</td></tr>
+        <tr><td>Charts</td><td>Recharts</td></tr>
+        <tr><td>Version control</td><td>GitHub</td></tr>
+        <tr><td>Hosting</td><td>Netlify (auto-deploy on push to <code>main</code>)</td></tr>
+        <tr><td>Persistence</td><td><code>localStorage</code> — recents, units, theme</td></tr>
+        <tr><td>Testing</td><td>Vitest (comprehensive) + Playwright (E2E)</td></tr>
+        <tr><td>Aesthetic</td><td>Apple-style green hero + tile grid</td></tr>
+        <tr><td>Dark mode</td><td>Lighter tiles variant</td></tr>
+        <tr><td>Default city</td><td>Timezone-based guess (no geo permission needed)</td></tr>
+        <tr><td>Search UX</td><td>Dismissable overlay on first load; reopens via search icon</td></tr>
+        <tr><td>Recent cities</td><td>LRU, max 5, localStorage</td></tr>
+        <tr><td>Deploy split</td><td>Claude local; Thena GitHub + Netlify browser clicks</td></tr>
+      </table>
+    </section>
+
+    <section class="card" id="architecture">
+      <h2>Architecture <span class="badge">Folder + data flow</span></h2>
+      <div class="subtitle">Every tile is a self-contained component with its own tests. API layer is one file — easy to mock.</div>
+
+      <details open>
+        <summary>Folder structure</summary>
+        <div>
+<pre class="tree">weather-app/
+├── <span class="dir">public/</span>
+│   └── favicon.svg
+├── <span class="dir">src/</span>
+│   ├── main.tsx                    <span class="comment"># React root</span>
+│   ├── App.tsx                     <span class="comment"># Layout shell + providers</span>
+│   ├── index.css                   <span class="comment"># Tailwind + theme CSS vars</span>
+│   │
+│   ├── <span class="dir">api/</span>
+│   │   ├── openMeteo.ts            <span class="comment"># Forecast fetch + error mapping</span>
+│   │   ├── geocoding.ts            <span class="comment"># City → lat/lng</span>
+│   │   └── types.ts
+│   │
+│   ├── <span class="dir">components/</span>
+│   │   ├── <span class="dir">ui/</span>                         <span class="comment"># Shadcn components</span>
+│   │   ├── <span class="dir">hero/</span>
+│   │   │   ├── Hero.tsx
+│   │   │   └── gradient.ts
+│   │   ├── <span class="dir">tiles/</span>
+│   │   │   ├── HourlyTile.tsx
+│   │   │   ├── ForecastTile.tsx
+│   │   │   ├── FeelsLikeTile.tsx
+│   │   │   ├── TrendChartTile.tsx
+│   │   │   ├── WindTile.tsx
+│   │   │   ├── SunTile.tsx
+│   │   │   ├── HumidityTile.tsx
+│   │   │   ├── UvTile.tsx
+│   │   │   └── PrecipTile.tsx
+│   │   ├── <span class="dir">search/</span>
+│   │   │   ├── SearchOverlay.tsx   <span class="comment"># Dismissable modal</span>
+│   │   │   ├── SearchBar.tsx       <span class="comment"># Debounced autocomplete</span>
+│   │   │   └── RecentCities.tsx    <span class="comment"># Chip row</span>
+│   │   ├── <span class="dir">states/</span>
+│   │   │   ├── LoadingState.tsx
+│   │   │   ├── ErrorState.tsx
+│   │   │   └── EmptyState.tsx
+│   │   ├── ErrorBoundary.tsx       <span class="comment"># Tier 1</span>
+│   │   ├── Toast.tsx               <span class="comment"># Shadcn Sonner</span>
+│   │   ├── ThemeToggle.tsx
+│   │   ├── UnitToggle.tsx
+│   │   └── WeatherIcon.tsx         <span class="comment"># Meteocons wrapper</span>
+│   │
+│   ├── <span class="dir">hooks/</span>
+│   │   ├── useGeolocation.ts
+│   │   ├── useTimezoneCity.ts      <span class="comment"># Timezone → default city</span>
+│   │   ├── useWeather.ts
+│   │   └── useLocalStorage.ts
+│   │
+│   ├── <span class="dir">stores/</span>
+│   │   ├── useUnitStore.ts         <span class="comment"># °C/°F global</span>
+│   │   ├── useThemeStore.ts
+│   │   └── useRecentCitiesStore.ts <span class="comment"># LRU max 5</span>
+│   │
+│   ├── <span class="dir">lib/</span>
+│   │   ├── wmoCodes.ts             <span class="comment"># WMO code → {label, icon}</span>
+│   │   ├── formatters.ts
+│   │   ├── logger.ts               <span class="comment"># Tier 1 structured logger</span>
+│   │   └── validation.ts
+│   │
+│   └── <span class="dir">test/</span>
+│       ├── setup.ts
+│       └── <span class="dir">fixtures/</span>
+│
+├── <span class="dir">tests/e2e/</span>
+│   ├── happy-path.spec.ts
+│   ├── error-states.spec.ts
+│   └── a11y.spec.ts
+│
+├── .env.example
+├── .gitignore
+├── netlify.toml
+├── playwright.config.ts
+├── vitest.config.ts
+├── tailwind.config.ts
+├── vite.config.ts
+├── package.json
+├── README.md
+└── CLAUDE.md</pre>
+        </div>
+      </details>
+
+      <details>
+        <summary>Data flow</summary>
+        <div>
+          <ol class="steps">
+            <li>On load: <code>useTimezoneCity</code> returns a default city (e.g., <code>America/Chicago</code> → Chicago). In parallel, <code>SearchOverlay</code> opens (dismissable).</li>
+            <li><code>useWeather(city, units)</code> fetches current + 7-day forecast from Open-Meteo in a single request.</li>
+            <li>Response cached in a lightweight state + <code>sessionStorage</code> pattern.</li>
+            <li>Unit toggle re-formats client-side (Open-Meteo returns metric; conversion is trivial). No refetch.</li>
+            <li>Search hits geocoding → picks first result → sets city → refetch.</li>
+          </ol>
+        </div>
+      </details>
+    </section>
+
+    <section class="card" id="phase-0">
+      <h2>Phase 0 — Foundation <span class="badge">Tier 1 mandatory</span></h2>
+      <div class="subtitle">Everything here must exist and be deployed <em>before</em> any feature code, per the JLS Tier 1 checklist.</div>
+
+      <h3>Steps</h3>
+      <ol class="steps">
+        <li>Scaffold Vite React-TS project: <code>npm create vite@latest weather-app -- --template react-ts</code></li>
+        <li>Install deps: Tailwind, Shadcn CLI, Recharts, Meteocons SVGs, Zustand (if used), Sonner, Vitest, Playwright, ESLint, Prettier.</li>
+        <li>Configure Tailwind + Shadcn with dark-mode class strategy.</li>
+        <li>Set up green identity palette in <code>tailwind.config.ts</code> (light + dark scales).</li>
+        <li>Write <code>.gitignore</code> (Node + Vite defaults + <code>.env</code> + <code>.netlify</code>).</li>
+        <li>Write <code>.env.example</code> (empty for now — pattern must exist).</li>
+        <li>Structured logger (<code>src/lib/logger.ts</code>) — dev console with prefix + level, prod no-op.</li>
+        <li>Toast system (Shadcn Sonner) — mount <code>&lt;Toaster /&gt;</code> in App shell, wrap in <code>useToast()</code>.</li>
+        <li>Error boundary — class component around app root, friendly fallback + reload.</li>
+        <li>Reusable state components: <code>LoadingState</code>, <code>ErrorState</code>, <code>EmptyState</code>.</li>
+        <li>Favicon — green SVG glyph in <code>public/favicon.svg</code>.</li>
+        <li><code>README.md</code> — how to run, test, deploy.</li>
+        <li><code>CLAUDE.md</code> — project-scoped rules for future sessions.</li>
+        <li>Vitest config + jsdom, Playwright config + one smoke test.</li>
+        <li>Hello-world page: "Weather app — under construction" with theme toggle working.</li>
+        <li>Netlify config (<code>netlify.toml</code>): build cmd, publish dir, SPA redirects.</li>
+        <li>Local git init + first commit on <code>main</code>.</li>
+        <li><strong>Hand off to Thena:</strong> GitHub repo + Netlify connection.</li>
+        <li>Verify hello-world is live at the Netlify URL <em>before</em> writing any feature code.</li>
+      </ol>
+
+      <h3>Verification</h3>
+      <ul class="verify" data-phase="0">
+        <li><code>npm run dev</code> opens hello-world.</li>
+        <li><code>npm run build</code> produces a working <code>dist/</code>.</li>
+        <li><code>npm run test</code> passes.</li>
+        <li><code>npm run test:e2e</code> passes.</li>
+        <li>Dark mode toggle flips theme.</li>
+        <li>Netlify auto-deploy fires on <code>git push</code>.</li>
+        <li>Public URL loads hello-world.</li>
+      </ul>
+
+      <div class="callout">
+        <strong>Gate:</strong> Only after every box above is checked do we move to Phase 1.
+      </div>
+    </section>
+
+    <section class="card" id="phase-1">
+      <h2>Phase 1 — Data + Default City <span class="badge">Real weather on screen</span></h2>
+      <div class="subtitle">Get real forecast data for a real default city with proper loading/error states. No polish, no tiles beyond the hero.</div>
+
+      <h3>Steps</h3>
+      <ol class="steps">
+        <li><code>api/openMeteo.ts</code> — <code>getForecast({ lat, lng, timezone })</code> hits <code>/v1/forecast</code> for current + hourly + daily + wind + UV + precipitation.</li>
+        <li><code>api/geocoding.ts</code> — <code>searchCities(query)</code> and <code>getCityByName(name)</code>.</li>
+        <li><code>api/types.ts</code> — raw API + normalized shape used by components.</li>
+        <li><code>lib/wmoCodes.ts</code> — map WMO codes 0–99 to <code>{ label, iconKey, isRainy, isSunny, ... }</code>.</li>
+        <li><code>lib/formatters.ts</code> — <code>formatTemp</code>, <code>formatWind</code>, <code>formatTime</code>, etc.</li>
+        <li><code>hooks/useTimezoneCity.ts</code> — <code>Intl.DateTimeFormat().resolvedOptions().timeZone</code> → curated <code>{ zone → city }</code> table.</li>
+        <li><code>hooks/useWeather.ts</code> — <code>{ city, units }</code> → <code>{ data, loading, error, refetch }</code>.</li>
+        <li><code>Hero.tsx</code> — big temp, condition, high/low. Uses <code>gradient.ts</code> for weather-tinted green.</li>
+        <li><code>gradient.ts</code> — condition → Tailwind gradient class (always in the green family).</li>
+        <li>Wire into <code>App.tsx</code> — default city → <code>useWeather</code> → <code>&lt;Hero /&gt;</code>. Loading and error states render correctly.</li>
+        <li>Unit toggle — <code>useUnitStore</code>, flips value, persists to localStorage.</li>
+      </ol>
+
+      <h3>Verification</h3>
+      <ul class="verify" data-phase="1">
+        <li>App loads with real forecast for timezone-guessed city.</li>
+        <li>Unit toggle flips °C ↔ °F everywhere.</li>
+        <li>Preference persists on reload.</li>
+        <li>Killing the network shows error state, not a crash.</li>
+        <li>Green gradient visibly shifts across sunny / rainy / cloudy.</li>
+      </ul>
+    </section>
+
+    <section class="card" id="phase-2">
+      <h2>Phase 2 — Tile Grid <span class="badge">Density from the mockup</span></h2>
+      <div class="subtitle">Every tile from the approved mockup. One commit per tile.</div>
+
+      <h3>Steps</h3>
+      <ol class="steps">
+        <li><code>HourlyTile</code> — next 12h, horizontal scroll, temp + icon.</li>
+        <li><code>ForecastTile</code> — 5 days, icon + label + range bar.</li>
+        <li><code>FeelsLikeTile</code> — feels like + short reason.</li>
+        <li><code>TrendChartTile</code> — Recharts, green line, soft grid.</li>
+        <li><code>WindTile</code> — compass with green needle.</li>
+        <li><code>SunTile</code> — sunrise/sunset arc with sun dot.</li>
+        <li><code>HumidityTile</code> — big number + dew point.</li>
+        <li><code>UvTile</code> — number + level label.</li>
+        <li><code>PrecipTile</code> — today % + 24h totals.</li>
+        <li><code>WeatherIcon.tsx</code> — WMO code + day/night → Meteocons SVG.</li>
+        <li>Layout — CSS grid, 2 cols mobile / 4 cols desktop.</li>
+      </ol>
+
+      <h3>Verification</h3>
+      <ul class="verify" data-phase="2">
+        <li>Every tile renders with real data.</li>
+        <li>Optional fields (e.g., UV at night) don't crash — graceful "—".</li>
+        <li>Grid reflows cleanly at 375px, 768px, 1440px.</li>
+        <li>Each tile has ≥1 Vitest test.</li>
+      </ul>
+    </section>
+
+    <section class="card" id="phase-3">
+      <h2>Phase 3 — Search + Recents <span class="badge">Discoverability</span></h2>
+      <div class="subtitle">First-load overlay + recent-cities chips + LRU logic.</div>
+
+      <h3>Steps</h3>
+      <ol class="steps">
+        <li><code>SearchOverlay</code> — Shadcn Dialog, ESC/backdrop/X dismissable. Opens on first load; reopens via header search icon.</li>
+        <li><code>SearchBar</code> — 250ms debounced, geocoding API, top 5 matches with country.</li>
+        <li><code>RecentCities</code> — chip row, click loads, × removes.</li>
+        <li><code>useRecentCitiesStore</code> — LRU, max 5, localStorage. Existing city bumps to front.</li>
+        <li>Input validation — trim, cap 100 chars, reject junk. Shows EmptyState for "type to search".</li>
+      </ol>
+
+      <h3>Verification</h3>
+      <ul class="verify" data-phase="3">
+        <li>First-load: overlay appears, dismissable, default city loaded in background.</li>
+        <li>Search picks city → hero + tiles re-render.</li>
+        <li>Recent chip appears, click loads, × removes.</li>
+        <li>Max 5, 6th push evicts oldest.</li>
+        <li>Preferences persist across reload.</li>
+      </ul>
+    </section>
+
+    <section class="card" id="phase-4">
+      <h2>Phase 4 — Polish <span class="badge">Accessibility + error UX + theme</span></h2>
+
+      <h3>Steps</h3>
+      <ol class="steps">
+        <li>Dark mode toggle — <code>ThemeToggle</code> in header, writes <code>class="dark"</code> on <code>&lt;html&gt;</code>, persists.</li>
+        <li>Verify dark palette matches the approved "lighter tiles" variant.</li>
+        <li>Keyboard nav — sane tab order, visible focus rings via <code>focus-visible:ring-*</code>.</li>
+        <li>Aria labels — icons, chart role + summary, toggles announce state.</li>
+        <li>Error state polish — city-not-found, network-failure, offline detection.</li>
+        <li>Empty state polish — search overlay with no query, no-recents first-time state.</li>
+        <li>Loading skeleton — shimmer per tile, better perceived perf.</li>
+        <li>Toast usage — location denied, fetch failed retry, copied city name.</li>
+        <li>Responsive audit — 320 / 375 / 768 / 1024 / 1440.</li>
+        <li>Meta tags — title, description, Open Graph for shareable previews.</li>
+      </ol>
+
+      <h3>Verification</h3>
+      <ul class="verify" data-phase="4">
+        <li>Fully keyboard-navigable, no mouse required.</li>
+        <li>Screen reader spot-check on hero, one tile, search.</li>
+        <li>Every error path shows human-worded message.</li>
+        <li>Dark mode readable across all tiles.</li>
+        <li>All viewport sizes look intentional.</li>
+      </ul>
+    </section>
+
+    <section class="card" id="phase-5">
+      <h2>Phase 5 — Testing <span class="badge">Comprehensive</span></h2>
+      <div class="subtitle">We picked the bias-toward-more scope, so this phase is real work — not a checkbox.</div>
+
+      <h3>Unit tests (Vitest)</h3>
+      <ol class="steps">
+        <li>Every component in <code>components/</code> has a test file.</li>
+        <li>Every hook has a test file with mocked API.</li>
+        <li>Formatters: table-driven test.</li>
+        <li>WMO code map: assert every code has a label + icon.</li>
+        <li>Recent-cities LRU: add, evict, dedupe-bumps, remove.</li>
+        <li>Input validation: empty, whitespace, length cap, injection-ish.</li>
+      </ol>
+
+      <h3>Integration tests (Vitest + jsdom)</h3>
+      <ol class="steps">
+        <li><code>useWeather</code> + mocked fetch: happy, network error, empty, malformed.</li>
+        <li><code>SearchOverlay</code> full interaction: open, type, pick, close, city updates.</li>
+      </ol>
+
+      <h3>E2E tests (Playwright)</h3>
+      <ol class="steps">
+        <li><strong>Happy path:</strong> load → hero → search "Paris" → forecast updates → toggle °F → dark mode → reload → state persists.</li>
+        <li><strong>Error states:</strong> <code>route.abort</code> → error copy. City-not-found copy.</li>
+        <li><strong>A11y:</strong> <code>@axe-core/playwright</code> on landing + after-search.</li>
+      </ol>
+
+      <h3>Verification</h3>
+      <ul class="verify" data-phase="5">
+        <li><code>npm run test</code> — all pass, no <code>.skip</code>, no console errors.</li>
+        <li><code>npm run test:e2e</code> — deterministic (3× locally).</li>
+        <li>Coverage report generated; gaps noted in <code>CLAUDE.md</code>.</li>
+      </ul>
+    </section>
+
+    <section class="card" id="phase-6">
+      <h2>Phase 6 — Ship <span class="badge">Submit to Johnny</span></h2>
+
+      <h3>Steps</h3>
+      <ol class="steps">
+        <li>Merge to <code>main</code> — Netlify auto-deploys.</li>
+        <li>Smoke test the deployed URL — happy path, dark mode, unit toggle, search, reload.</li>
+        <li>Update README with live URL + screenshot.</li>
+        <li>Submit — Netlify URL via Johnny's Google Form.</li>
+      </ol>
+
+      <h3>Verification</h3>
+      <ul class="verify" data-phase="6">
+        <li>Public URL loads for a fresh incognito visit.</li>
+        <li>Lighthouse scores captured; red flags fixed.</li>
+        <li>No console errors in production build.</li>
+      </ul>
+    </section>
+
+    <section class="card" id="handoff">
+      <h2>Handoff Checklist for Thena <span class="badge">Browser clicks only</span></h2>
+      <div class="subtitle">I can't do these — they need your login. I'll ping you when Phase 0 is code-complete; you do this once.</div>
+
+      <ol class="steps">
+        <li><strong>GitHub:</strong> Create a public repo (e.g., <code>weather-app</code>). Empty is fine. Copy the URL.</li>
+        <li><strong>Local git:</strong> I'll walk you through <code>git remote add origin</code> + <code>git push -u origin main</code>.</li>
+        <li><strong>Netlify:</strong> Log in → Add new site → Import from GitHub → pick the repo. <code>netlify.toml</code> auto-configures. Deploy.</li>
+        <li><strong>Send me the Netlify URL.</strong> I'll put it in the README and verify hello-world is live.</li>
+      </ol>
+
+      <div class="callout">
+        After that, every <code>git push</code> auto-deploys. You never have to touch this again unless something breaks.
+      </div>
+    </section>
+
+    <section class="card" id="risks">
+      <h2>Risks &amp; Assumptions</h2>
+      <ul class="risk-list">
+        <li><strong>Open-Meteo uptime.</strong> Free service, no SLA. If it flakes during ship, fallback to last-good cached response.</li>
+        <li><strong>Timezone → city coverage.</strong> Curated table won't cover every timezone; fallback = Chicago. Acceptable for v1.</li>
+        <li><strong>Meteocons packaging.</strong> If a community bundle doesn't play nice with Vite, fall back to raw SVGs in <code>public/icons/</code>.</li>
+        <li><strong>Recharts bundle size.</strong> ~60KB gzipped. Fine for one chart; revisit if charts multiply.</li>
+        <li><strong>Netlify free tier.</strong> 100GB bandwidth / 300 build min per month. Way more than needed.</li>
+      </ul>
+    </section>
+
+    <section class="card" id="success">
+      <h2>Success Criteria</h2>
+      <ul class="verify" data-phase="final">
+        <li>Every core requirement from the exercise met.</li>
+        <li>Every polish requirement from the exercise met.</li>
+        <li>Tier 1 JLS checklist ticked (or intentional skips documented in <code>CLAUDE.md</code>).</li>
+        <li>Comprehensive test coverage (Vitest unit + Playwright E2E).</li>
+        <li>Public Netlify URL loads fast, looks intentional, works mobile + desktop.</li>
+        <li>Submitted to Johnny via the Google Form.</li>
+      </ul>
+    </section>
+
+    <div class="footer">
+      Weather App plan · 2026-07-01 · Click checkboxes to track progress (saved in your browser).
+    </div>
+
+  </main>
+</div>
+
+<button class="reset-btn" onclick="resetProgress()">Reset progress</button>
+
+<script>
+  // Click-to-check + persist in localStorage
+  const STORAGE_KEY = 'weather-app-plan-progress';
+  const state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+
+  document.querySelectorAll('ul.verify').forEach((ul) => {
+    const phase = ul.dataset.phase;
+    Array.from(ul.querySelectorAll('li')).forEach((li, idx) => {
+      const key = `${phase}:${idx}`;
+      if (state[key]) li.classList.add('checked');
+      li.addEventListener('click', () => {
+        li.classList.toggle('checked');
+        state[key] = li.classList.contains('checked');
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      });
+    });
+  });
+
+  function resetProgress() {
+    if (confirm('Clear all checkbox progress?')) {
+      localStorage.removeItem(STORAGE_KEY);
+      document.querySelectorAll('ul.verify li.checked').forEach(li => li.classList.remove('checked'));
+    }
+  }
+</script>
+
+</body>
+</html>
