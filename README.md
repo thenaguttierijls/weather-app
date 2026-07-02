@@ -2,7 +2,7 @@
 
 A publicly-facing weather web app. Auto-detects location, shows current conditions, 5-day forecast, temperature trends, and recent-city quick access. Built as an exercise for JLS.
 
-**Live:** _(TBD — will be filled in after Netlify deploy)_
+**Live:** https://weatherappsneasons.netlify.app/
 
 ## Stack
 
