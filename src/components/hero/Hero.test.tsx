@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, render, screen } from '@testing-library/react'
 
 import { Hero } from './Hero'
 import type { NormalizedForecast } from '@/api/types'
@@ -52,6 +52,26 @@ function makeForecast(overrides: Partial<NormalizedForecast> = {}): NormalizedFo
 describe('Hero', () => {
   beforeEach(() => {
     useUnitStore.setState({ unit: 'metric' })
+    // useCityImage fires on every render; stub fetch so it resolves to null
+    // without hitting the network or noisy-logging.
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    // Silence React act(...) warnings from the microtask-scheduled state
+    // updates in useCityImage — these tests assert synchronously so the
+    // async cleanup can't run inside an act() block.
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: false,
+      status: 404,
+      json: async () => ({}),
+    } as unknown as Response)))
+  })
+
+  afterEach(async () => {
+    // Flush the useCityImage microtask-scheduled state updates before mocks
+    // are torn down.
+    await act(async () => { await Promise.resolve() })
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
   })
 
   it('renders the city name and country', () => {

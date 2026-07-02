@@ -1,5 +1,6 @@
 import type { NormalizedForecast } from '@/api/types'
 import { getHeroGradient } from '@/components/hero/gradient'
+import { useCityImage } from '@/hooks/useCityImage'
 import { formatTemp } from '@/lib/formatters'
 import type { TempUnit } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
@@ -24,6 +25,7 @@ export function Hero({ forecast }: HeroProps) {
     weatherCode: current.weatherCode,
     isDay: current.isDay,
   })
+  const { url: cityImageUrl } = useCityImage(location.name)
 
   const today = daily[0]
   const bigTemp = formatTemp(current.tempC, tempUnit)
@@ -45,13 +47,23 @@ export function Hero({ forecast }: HeroProps) {
       )}
     >
       <div className="flex flex-col items-start gap-4">
-        <div className="flex items-baseline gap-3">
-          <h2 className="text-3xl font-medium tracking-tight md:text-4xl">
-            {location.name || 'Unknown location'}
-          </h2>
-          {location.country && (
-            <span className="text-sm text-white/70">{location.country}</span>
+        <div className="flex items-center gap-4">
+          {cityImageUrl && (
+            <img
+              src={cityImageUrl}
+              alt=""
+              loading="lazy"
+              className="h-16 w-16 flex-shrink-0 rounded-full object-cover ring-2 ring-white/40"
+            />
           )}
+          <div className="flex items-baseline gap-3">
+            <h2 className="text-3xl font-medium tracking-tight md:text-4xl">
+              {location.name || 'Unknown location'}
+            </h2>
+            {location.country && (
+              <span className="text-sm text-white/70">{location.country}</span>
+            )}
+          </div>
         </div>
 
         <div
