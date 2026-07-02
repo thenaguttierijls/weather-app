@@ -91,11 +91,29 @@ export function Hero({ forecast }: HeroProps) {
       </div>
 
       <div className="pointer-events-none relative hidden items-center justify-center md:flex md:w-2/5">
+        {current.weatherCode !== 0 && (
+          <>
+            <WeatherIcon
+              code={3}
+              isDay={true}
+              size={140}
+              className="absolute left-2 top-6 opacity-40 drop-shadow-md"
+              aria-label=""
+            />
+            <WeatherIcon
+              code={3}
+              isDay={true}
+              size={100}
+              className="absolute bottom-8 right-2 opacity-30 drop-shadow-md"
+              aria-label=""
+            />
+          </>
+        )}
         <WeatherIcon
           code={current.weatherCode}
           isDay={current.isDay}
           size={320}
-          className="drop-shadow-2xl"
+          className="relative drop-shadow-2xl"
           aria-label=""
         />
       </div>
