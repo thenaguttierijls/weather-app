@@ -1,6 +1,6 @@
 import type { NormalizedForecast } from '@/api/types'
+import { WeatherIcon } from '@/components/WeatherIcon'
 import { getHeroGradient } from '@/components/hero/gradient'
-import { useCityImage } from '@/hooks/useCityImage'
 import { formatTemp } from '@/lib/formatters'
 import type { TempUnit } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
@@ -25,7 +25,6 @@ export function Hero({ forecast }: HeroProps) {
     weatherCode: current.weatherCode,
     isDay: current.isDay,
   })
-  const { url: cityImageUrl } = useCityImage(location.name)
 
   const today = daily[0]
   const bigTemp = formatTemp(current.tempC, tempUnit)
@@ -46,29 +45,22 @@ export function Hero({ forecast }: HeroProps) {
         gradient
       )}
     >
-      <div
-        className={cn(
-          'flex flex-col items-start justify-center gap-4 px-6 py-10 md:px-12 md:py-16',
-          cityImageUrl ? 'w-full md:w-3/5' : 'w-full'
-        )}
-      >
-        <div className="flex items-center gap-4">
-          {cityImageUrl && (
-            <img
-              src={cityImageUrl}
-              alt=""
-              loading="lazy"
-              className="h-16 w-16 flex-shrink-0 rounded-full object-cover ring-2 ring-white/40 md:hidden"
-            />
+      <WeatherIcon
+        code={current.weatherCode}
+        isDay={current.isDay}
+        size={112}
+        className="absolute right-4 top-4 drop-shadow-md md:hidden"
+        aria-label=""
+      />
+
+      <div className="flex w-full flex-col items-start justify-center gap-4 px-6 py-10 md:w-3/5 md:px-12 md:py-16">
+        <div className="flex items-baseline gap-3">
+          <h2 className="text-3xl font-medium tracking-tight md:text-4xl">
+            {location.name || 'Unknown location'}
+          </h2>
+          {location.country && (
+            <span className="text-sm text-white/70">{location.country}</span>
           )}
-          <div className="flex items-baseline gap-3">
-            <h2 className="text-3xl font-medium tracking-tight md:text-4xl">
-              {location.name || 'Unknown location'}
-            </h2>
-            {location.country && (
-              <span className="text-sm text-white/70">{location.country}</span>
-            )}
-          </div>
         </div>
 
         <div
@@ -95,20 +87,15 @@ export function Hero({ forecast }: HeroProps) {
         </div>
       </div>
 
-      {cityImageUrl && (
-        <div className="relative hidden md:block md:w-2/5">
-          <img
-            src={cityImageUrl}
-            alt=""
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-black/30 to-transparent"
-          />
-        </div>
-      )}
+      <div className="pointer-events-none hidden items-center justify-center md:flex md:w-2/5">
+        <WeatherIcon
+          code={current.weatherCode}
+          isDay={current.isDay}
+          size={320}
+          className="drop-shadow-2xl"
+          aria-label=""
+        />
+      </div>
     </section>
   )
 }
