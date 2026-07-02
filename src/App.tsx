@@ -1,5 +1,10 @@
+import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
+
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { HeaderSearchButton } from '@/components/HeaderSearchButton'
 import { Hero } from '@/components/hero/Hero'
+import { SearchOverlay } from '@/components/search/SearchOverlay'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { UnitToggle } from '@/components/UnitToggle'
 import { ErrorState } from '@/components/states/ErrorState'
@@ -14,11 +19,46 @@ import { TrendChartTile } from '@/components/tiles/TrendChartTile'
 import { UvTile } from '@/components/tiles/UvTile'
 import { WindTile } from '@/components/tiles/WindTile'
 import { Toaster } from '@/components/ui/sonner'
+import { useGeolocation } from '@/hooks/useGeolocation'
 import { useTimezoneCity } from '@/hooks/useTimezoneCity'
-import { useWeather } from '@/hooks/useWeather'
+import { useWeather, type WeatherCity } from '@/hooks/useWeather'
+import { useRecentCitiesStore } from '@/stores/useRecentCitiesStore'
+import { useSelectedCityStore } from '@/stores/useSelectedCityStore'
 
 function App() {
-  const city = useTimezoneCity()
+  const timezoneCity = useTimezoneCity()
+  const geo = useGeolocation()
+  const selectedCity = useSelectedCityStore((s) => s.city)
+  const recents = useRecentCitiesStore((s) => s.cities)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const deniedToastedRef = useRef(false)
+
+  const city: WeatherCity =
+    selectedCity ??
+    recents[0] ??
+    (geo.status === 'ready' && geo.city ? geo.city : null) ??
+    timezoneCity
+
+  useEffect(() => {
+    if (!selectedCity && geo.status === 'ready' && geo.city && !geo.toasted) {
+      const suffix = geo.city.country ? `, ${geo.city.country}` : ''
+      toast.info(`Detected ${geo.city.name}${suffix}.`)
+      geo.markToasted()
+    }
+  }, [selectedCity, geo])
+
+  useEffect(() => {
+    if (
+      !selectedCity &&
+      recents.length === 0 &&
+      (geo.status === 'denied' || geo.status === 'unavailable') &&
+      !deniedToastedRef.current
+    ) {
+      deniedToastedRef.current = true
+      toast.info(`Using ${timezoneCity.name} — you can change it via search.`)
+    }
+  }, [selectedCity, recents.length, geo.status, timezoneCity.name])
+
   const { data, loading, error, refetch } = useWeather(city)
 
   return (
@@ -27,6 +67,7 @@ function App() {
         <header className="flex items-center justify-between border-b border-border px-4 py-4 md:px-8">
           <h1 className="text-lg font-semibold">Weather App</h1>
           <div className="flex items-center gap-1">
+            <HeaderSearchButton onClick={() => setSearchOpen(true)} />
             <UnitToggle />
             <ThemeToggle />
           </div>
@@ -58,6 +99,7 @@ function App() {
             </>
           )}
         </main>
+        <SearchOverlay open={searchOpen} onOpenChange={setSearchOpen} />
       </div>
       <Toaster />
     </ErrorBoundary>
