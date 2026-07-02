@@ -41,19 +41,24 @@ export function Hero({ forecast }: HeroProps) {
     <section
       aria-label={sectionLabel}
       className={cn(
-        'relative flex w-full flex-col justify-center overflow-hidden rounded-2xl px-6 py-10 text-white shadow-lg',
-        'min-h-[420px] md:min-h-[520px] md:px-12 md:py-16',
+        'relative flex w-full flex-col overflow-hidden rounded-2xl text-white shadow-lg md:flex-row',
+        'min-h-[420px] md:min-h-[520px]',
         gradient
       )}
     >
-      <div className="flex flex-col items-start gap-4">
+      <div
+        className={cn(
+          'flex flex-col items-start justify-center gap-4 px-6 py-10 md:px-12 md:py-16',
+          cityImageUrl ? 'w-full md:w-3/5' : 'w-full'
+        )}
+      >
         <div className="flex items-center gap-4">
           {cityImageUrl && (
             <img
               src={cityImageUrl}
               alt=""
               loading="lazy"
-              className="h-16 w-16 flex-shrink-0 rounded-full object-cover ring-2 ring-white/40"
+              className="h-16 w-16 flex-shrink-0 rounded-full object-cover ring-2 ring-white/40 md:hidden"
             />
           )}
           <div className="flex items-baseline gap-3">
@@ -89,6 +94,21 @@ export function Hero({ forecast }: HeroProps) {
           Feels like {feelsLike}
         </div>
       </div>
+
+      {cityImageUrl && (
+        <div className="relative hidden md:block md:w-2/5">
+          <img
+            src={cityImageUrl}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-black/30 to-transparent"
+          />
+        </div>
+      )}
     </section>
   )
 }
