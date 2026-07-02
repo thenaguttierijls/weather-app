@@ -46,6 +46,7 @@ blob-report
 
 # Claude Code / AMC local config
 .claude/
+.playwright-mcp/
 
 # OS
 .DS_Store
