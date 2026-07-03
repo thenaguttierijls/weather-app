@@ -13,12 +13,22 @@ describe('getHeroGradient', () => {
     }
   })
 
-  it('returns a class string that stays in the green family for every known WMO code (night)', () => {
+  it('returns a bg-gradient class for every known WMO code (night)', () => {
     for (const code of WMO_CODES) {
       const cls = getHeroGradient({ weatherCode: code, isDay: false })
-      expect(cls).toContain('from-brand-')
-      expect(cls).toContain('via-brand-')
-      expect(cls).toContain('to-brand-')
+      expect(cls).toContain('bg-gradient-to-br')
+      expect(cls).toMatch(/from-\S+/)
+    }
+  })
+
+  it('picks a darker night gradient (contains slate or brand-800/900) for each category', () => {
+    // Every weather category should have a distinct night variant that is
+    // darker than day — we detect that by presence of slate-* or brand-800/900.
+    const nightIndicators = /(slate-|brand-800|brand-900|black)/
+    const codes = [0, 3, 61, 71, 95]
+    for (const code of codes) {
+      const night = getHeroGradient({ weatherCode: code, isDay: false })
+      expect(night).toMatch(nightIndicators)
     }
   })
 

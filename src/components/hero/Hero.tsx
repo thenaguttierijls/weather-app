@@ -1,3 +1,5 @@
+import { Moon, Sun } from 'lucide-react'
+
 import type { NormalizedForecast } from '@/api/types'
 import { WeatherIcon } from '@/components/WeatherIcon'
 import { getHeroGradient } from '@/components/hero/gradient'
@@ -21,10 +23,11 @@ export function Hero({ forecast }: HeroProps) {
   const tempUnit = unitToTemp(unit)
 
   const { current, daily, location } = forecast
-  const info = getWmoInfo(current.weatherCode, current.isDay)
+  const isDay = current.isDay
+  const info = getWmoInfo(current.weatherCode, isDay)
   const gradient = getHeroGradient({
     weatherCode: current.weatherCode,
-    isDay: current.isDay,
+    isDay,
   })
 
   const today = daily[0]
@@ -46,11 +49,11 @@ export function Hero({ forecast }: HeroProps) {
         gradient
       )}
     >
-      <HeroDecoration info={info} isDay={current.isDay} />
+      <HeroDecoration info={info} isDay={isDay} />
 
       <WeatherIcon
         code={current.weatherCode}
-        isDay={current.isDay}
+        isDay={isDay}
         size={112}
         className="absolute right-4 top-4 drop-shadow-md md:hidden"
         aria-label=""
@@ -73,8 +76,13 @@ export function Hero({ forecast }: HeroProps) {
           {bigTemp}
         </div>
 
-        <div className="text-xl font-medium text-white/90 md:text-2xl">
-          {info.label}
+        <div className="flex items-center gap-2 text-xl font-medium text-white/90 md:text-2xl">
+          <span>{info.label}</span>
+          {isDay ? (
+            <Sun className="h-5 w-5 opacity-80 md:h-6 md:w-6" aria-label="Day" />
+          ) : (
+            <Moon className="h-5 w-5 opacity-80 md:h-6 md:w-6" aria-label="Night" />
+          )}
         </div>
 
         {today && (
@@ -111,7 +119,7 @@ export function Hero({ forecast }: HeroProps) {
         )}
         <WeatherIcon
           code={current.weatherCode}
-          isDay={current.isDay}
+          isDay={isDay}
           size={320}
           className="relative drop-shadow-2xl"
           aria-label=""

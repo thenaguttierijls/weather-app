@@ -121,4 +121,51 @@ describe('Hero', () => {
     const section = screen.getByRole('region', { name: /Current weather/ })
     expect(section.className).toMatch(/from-brand-/)
   })
+
+  it('shows a sun icon labelled "Day" when isDay is true', () => {
+    render(
+      <Hero
+        forecast={makeForecast({
+          current: { ...makeForecast().current, isDay: true },
+        })}
+      />
+    )
+    expect(screen.getByLabelText('Day')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Night')).not.toBeInTheDocument()
+  })
+
+  it('shows a moon icon labelled "Night" when isDay is false', () => {
+    render(
+      <Hero
+        forecast={makeForecast({
+          current: { ...makeForecast().current, isDay: false },
+        })}
+      />
+    )
+    expect(screen.getByLabelText('Night')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Day')).not.toBeInTheDocument()
+  })
+
+  it('picks a darker gradient at night than during the day for the same weather code', () => {
+    const { container: dayContainer } = render(
+      <Hero
+        forecast={makeForecast({
+          current: { ...makeForecast().current, weatherCode: 0, isDay: true },
+        })}
+      />
+    )
+    const dayGradient = dayContainer.querySelector('section')?.className ?? ''
+
+    const { container: nightContainer } = render(
+      <Hero
+        forecast={makeForecast({
+          current: { ...makeForecast().current, weatherCode: 0, isDay: false },
+        })}
+      />
+    )
+    const nightGradient = nightContainer.querySelector('section')?.className ?? ''
+
+    expect(dayGradient).not.toEqual(nightGradient)
+    expect(nightGradient).toMatch(/(slate-|brand-800|brand-900|black)/)
+  })
 })
