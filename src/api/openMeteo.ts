@@ -3,9 +3,11 @@ import type {
   NormalizedDailyEntry,
   NormalizedForecast,
   NormalizedHourlyEntry,
+  NormalizedMinutely15Entry,
   OpenMeteoDaily,
   OpenMeteoForecast,
   OpenMeteoHourly,
+  OpenMeteoMinutely15,
 } from './types'
 import { WeatherApiError } from './types'
 
@@ -38,6 +40,8 @@ const DAILY_FIELDS = [
   'precipitation_probability_max',
 ].join(',')
 
+const MINUTELY_15_FIELDS = ['precipitation'].join(',')
+
 interface GetForecastArgs {
   lat: number
   lng: number
@@ -59,6 +63,8 @@ export async function getForecast({
     current: CURRENT_FIELDS,
     hourly: HOURLY_FIELDS,
     daily: DAILY_FIELDS,
+    minutely_15: MINUTELY_15_FIELDS,
+    forecast_minutely_15: '96',
     wind_speed_unit: 'kmh',
     timezone,
     forecast_days: '7',
@@ -123,7 +129,20 @@ function normalize(
     },
     hourly: buildHourly(raw.hourly),
     daily: buildDaily(raw.daily),
+    minutely15: raw.minutely_15 ? buildMinutely15(raw.minutely_15) : [],
   }
+}
+
+function buildMinutely15(m: OpenMeteoMinutely15): NormalizedMinutely15Entry[] {
+  const len = Math.min(m.time.length, 96)
+  const out: NormalizedMinutely15Entry[] = []
+  for (let i = 0; i < len; i++) {
+    out.push({
+      time: m.time[i]!,
+      precip: m.precipitation[i] ?? 0,
+    })
+  }
+  return out
 }
 
 function buildHourly(h: OpenMeteoHourly): NormalizedHourlyEntry[] {

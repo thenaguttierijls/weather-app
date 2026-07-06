@@ -35,6 +35,10 @@ function goodResponsePayload() {
       uv_index_max: [6.5, 5.2],
       precipitation_probability_max: [10, 60],
     },
+    minutely_15: {
+      time: ['2026-07-02T15:00', '2026-07-02T15:15', '2026-07-02T15:30'],
+      precipitation: [0, 0.3, 1.1],
+    },
   }
 }
 
@@ -87,6 +91,16 @@ describe('getForecast', () => {
     expect(result.hourly[0]?.tempC).toBe(21.4)
     expect(result.daily).toHaveLength(2)
     expect(result.daily[1]?.precipProbability).toBe(60)
+    expect(result.minutely15).toHaveLength(3)
+    expect(result.minutely15?.[1]?.precip).toBe(0.3)
+  })
+
+  it('returns an empty minutely15 array when the response omits it', async () => {
+    const payload = goodResponsePayload() as Record<string, unknown>
+    delete payload.minutely_15
+    vi.stubGlobal('fetch', vi.fn(async () => mockOk(payload)))
+    const result = await getForecast({ lat: 0, lng: 0, timezone: 'UTC' })
+    expect(result.minutely15).toEqual([])
   })
 
   it('passes the timezone and requests kmh wind unit', async () => {

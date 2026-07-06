@@ -17,7 +17,7 @@ import { FeelsLikeTile } from '@/components/tiles/FeelsLikeTile'
 import { ForecastTile } from '@/components/tiles/ForecastTile'
 import { HourlyTile } from '@/components/tiles/HourlyTile'
 import { HumidityTile } from '@/components/tiles/HumidityTile'
-import { PrecipMapTile } from '@/components/tiles/PrecipMapTile'
+import { NowcastTile } from '@/components/tiles/NowcastTile'
 import { PrecipTile } from '@/components/tiles/PrecipTile'
 import { SunTile } from '@/components/tiles/SunTile'
 import { TrendChartTile } from '@/components/tiles/TrendChartTile'
@@ -150,7 +150,7 @@ function App() {
                     <TrendChartTile forecast={data} className="col-span-2" />
                     <WindTile forecast={data} />
                     <SunTile forecast={data} />
-                    <PrecipMapTile forecast={data} className="col-span-2 md:col-span-4" />
+                    <NowcastTile forecast={data} className="col-span-2" />
                   </div>
                 </>
               )}

@@ -28,6 +28,11 @@ export interface OpenMeteoDaily {
   precipitation_probability_max: number[]
 }
 
+export interface OpenMeteoMinutely15 {
+  time: string[]
+  precipitation: number[]
+}
+
 export interface OpenMeteoForecast {
   latitude: number
   longitude: number
@@ -35,6 +40,7 @@ export interface OpenMeteoForecast {
   current: OpenMeteoCurrent
   hourly: OpenMeteoHourly
   daily: OpenMeteoDaily
+  minutely_15?: OpenMeteoMinutely15
 }
 
 export interface GeoResult {
@@ -85,11 +91,17 @@ export interface NormalizedDailyEntry {
   precipProbability: number
 }
 
+export interface NormalizedMinutely15Entry {
+  time: string
+  precip: number
+}
+
 export interface NormalizedForecast {
   location: NormalizedLocation
   current: NormalizedCurrent
   hourly: NormalizedHourlyEntry[]
   daily: NormalizedDailyEntry[]
+  minutely15?: NormalizedMinutely15Entry[]
 }
 
 export class WeatherApiError extends Error {
