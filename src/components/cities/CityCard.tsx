@@ -1,4 +1,5 @@
 import { MapPin, X } from 'lucide-react'
+import type { MouseEvent } from 'react'
 import { toast } from 'sonner'
 
 import { WeatherIcon } from '@/components/WeatherIcon'
@@ -58,7 +59,7 @@ export function CityCard({ city }: CityCardProps) {
     setView('detail')
   }
 
-  const handleRemove = (e: React.MouseEvent) => {
+  const handleRemove = (e: MouseEvent) => {
     e.stopPropagation()
     const idx = currentIndex
     const removed = remove(city.id)
@@ -74,6 +75,8 @@ export function CityCard({ city }: CityCardProps) {
 
   return (
     <div
+      role="group"
+      aria-labelledby={`city-card-heading-${city.id}`}
       className={cn(
         'relative flex w-full items-center justify-between rounded-2xl border border-border bg-card p-4 shadow-sm',
         'transition-colors hover:bg-accent/50'
@@ -87,7 +90,7 @@ export function CityCard({ city }: CityCardProps) {
       />
       <div className="pointer-events-none relative z-10 flex flex-col">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold">{city.name}</h3>
+          <h3 id={`city-card-heading-${city.id}`} className="text-lg font-semibold">{city.name}</h3>
           {city.isPinned && (
             <MapPin
               className="h-4 w-4 text-muted-foreground"
