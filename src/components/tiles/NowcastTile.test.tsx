@@ -53,9 +53,9 @@ describe('NowcastTile', () => {
     expect(screen.getByText(/rain in ~\d+ min/i)).toBeInTheDocument()
   })
 
-  it('shows "No rain in the next hour" when clear', () => {
+  it('shows "No rain expected" when clear', () => {
     render(<NowcastTile forecast={makeForecast({ minutely15: slots('2026-07-06T12:00:00Z', [0, 0, 0, 0]) })} />)
-    expect(screen.getByText(/no rain in the next hour/i)).toBeInTheDocument()
+    expect(screen.getByText(/no rain expected/i)).toBeInTheDocument()
   })
 
   it('shows an unavailable message when there is no minutely data', () => {
