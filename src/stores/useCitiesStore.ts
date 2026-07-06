@@ -44,9 +44,19 @@ export const useCitiesStore = create<CitiesState>()(
 
       add: (input, opts) => {
         const id = idFor(input.lat, input.lng)
-        if (get().cities.some((c) => c.id === id)) return
-
         const pinned = opts?.pinned === true
+        const existing = get().cities
+        const existingEntry = existing.find((c) => c.id === id)
+
+        if (existingEntry) {
+          if (pinned && !existingEntry.isPinned) {
+            const promoted: SavedCity = { ...existingEntry, isPinned: true }
+            const others = existing.filter((c) => c.id !== id && !c.isPinned)
+            set({ cities: [promoted, ...others] })
+          }
+          return
+        }
+
         const entry: SavedCity = {
           id,
           name: input.name,
@@ -58,7 +68,6 @@ export const useCitiesStore = create<CitiesState>()(
           isPinned: pinned,
         }
 
-        const existing = get().cities
         let next: SavedCity[]
         if (pinned) {
           next = [entry, ...existing.filter((c) => !c.isPinned)]

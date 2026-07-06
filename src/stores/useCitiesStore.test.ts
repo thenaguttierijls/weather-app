@@ -44,6 +44,27 @@ describe('useCitiesStore', () => {
     expect(cities[1]?.name).toBe('Chicago')
   })
 
+  it('add with pinned: true promotes an existing non-pinned entry', () => {
+    useCitiesStore.getState().add(tokyo)
+    useCitiesStore.getState().add(chicago)
+    // Chicago is at index 1, non-pinned. Re-add with pinned: true.
+    useCitiesStore.getState().add(chicago, { pinned: true })
+    const cities = useCitiesStore.getState().cities
+    expect(cities[0]?.name).toBe('Chicago')
+    expect(cities[0]?.isPinned).toBe(true)
+    expect(cities).toHaveLength(2)
+    expect(cities[1]?.name).toBe('Tokyo')
+  })
+
+  it('add on an already-pinned entry is a no-op', () => {
+    useCitiesStore.getState().add(chicago, { pinned: true })
+    const before = useCitiesStore.getState().cities[0]
+    useCitiesStore.getState().add(chicago, { pinned: true })
+    const after = useCitiesStore.getState().cities[0]
+    expect(useCitiesStore.getState().cities).toHaveLength(1)
+    expect(after?.addedAt).toBe(before?.addedAt) // no re-timestamp
+  })
+
   it('add is a no-op when city already exists (dedupe via hasByCoords)', () => {
     useCitiesStore.getState().add(chicago)
     useCitiesStore.getState().add({ ...chicago, name: 'Chi Town' })
