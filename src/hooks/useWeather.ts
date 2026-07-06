@@ -60,7 +60,7 @@ function writeCacheEntry(entry: CacheEntry): void {
   if (typeof window === 'undefined') return
   const store = readCacheStore()
   const filtered = store.entries.filter((e) => e.key !== entry.key)
-  const next: CacheStore = { entries: [entry, ...filtered].slice(0, 5) }
+  const next: CacheStore = { entries: [entry, ...filtered].slice(0, 15) }
   try {
     window.localStorage.setItem(CACHE_KEY, JSON.stringify(next))
   } catch (err) {

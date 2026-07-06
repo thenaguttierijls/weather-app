@@ -6,11 +6,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import type { WeatherCity } from '@/hooks/useWeather'
-import { useRecentCitiesStore } from '@/stores/useRecentCitiesStore'
+import { useCitiesStore } from '@/stores/useCitiesStore'
 import { useSelectedCityStore } from '@/stores/useSelectedCityStore'
 
-import { RecentCities } from './RecentCities'
 import { SearchBar } from './SearchBar'
 
 interface SearchOverlayProps {
@@ -18,43 +16,38 @@ interface SearchOverlayProps {
   onOpenChange: (open: boolean) => void
 }
 
-function geoToCity(result: GeoResult): WeatherCity {
-  return {
-    name: result.name,
-    country: result.country,
-    lat: result.latitude,
-    lng: result.longitude,
-    timezone: result.timezone,
-  }
-}
-
 export function SearchOverlay({ open, onOpenChange }: SearchOverlayProps) {
   const setSelectedCity = useSelectedCityStore((s) => s.setCity)
-  const addRecent = useRecentCitiesStore((s) => s.add)
-
-  const pickCity = (city: WeatherCity) => {
-    setSelectedCity(city)
-    addRecent(city)
-    onOpenChange(false)
-  }
+  const addCity = useCitiesStore((s) => s.add)
 
   const handleSearchSelect = (result: GeoResult) => {
-    pickCity(geoToCity(result))
+    addCity({
+      name: result.name,
+      country: result.country,
+      lat: result.latitude,
+      lng: result.longitude,
+      timezone: result.timezone,
+    })
+    setSelectedCity({
+      lat: result.latitude,
+      lng: result.longitude,
+      timezone: result.timezone,
+      name: result.name,
+      country: result.country,
+    })
+    onOpenChange(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Change city</DialogTitle>
+          <DialogTitle>Add a city</DialogTitle>
           <DialogDescription>
-            Type to search worldwide, or pick a recent one below.
+            Search worldwide and tap a result to add it to your list.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-4">
-          <SearchBar onSelect={handleSearchSelect} />
-          <RecentCities onSelect={pickCity} />
-        </div>
+        <SearchBar onSelect={handleSearchSelect} />
       </DialogContent>
     </Dialog>
   )

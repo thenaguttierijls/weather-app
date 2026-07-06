@@ -1,48 +1,19 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { GeoResult } from '@/api/types'
-import type { WeatherCity } from '@/hooks/useWeather'
-import { useRecentCitiesStore } from '@/stores/useRecentCitiesStore'
+import * as geocodingModule from '@/api/geocoding'
+import { useCitiesStore } from '@/stores/useCitiesStore'
 import { useSelectedCityStore } from '@/stores/useSelectedCityStore'
+
 import { SearchOverlay } from './SearchOverlay'
-
-vi.mock('@/api/geocoding', () => ({
-  searchCities: vi.fn(),
-}))
-
-import { searchCities } from '@/api/geocoding'
-
-const mockedSearchCities = vi.mocked(searchCities)
-
-function paris(): GeoResult {
-  return {
-    id: 1,
-    name: 'Paris',
-    country: 'France',
-    latitude: 48.85,
-    longitude: 2.35,
-    timezone: 'Europe/Paris',
-  }
-}
-
-function makeCity(name: string, country = 'France'): WeatherCity {
-  return {
-    name,
-    country,
-    lat: 1,
-    lng: 2,
-    timezone: 'UTC',
-  }
-}
 
 describe('SearchOverlay', () => {
   beforeEach(() => {
     localStorage.clear()
-    useRecentCitiesStore.setState({ cities: [] })
+    useCitiesStore.setState({ cities: [], sortMode: 'recent' })
     useSelectedCityStore.setState({ city: null })
-    mockedSearchCities.mockReset()
+    vi.spyOn(console, 'error').mockImplementation(() => {})
     vi.spyOn(console, 'warn').mockImplementation(() => {})
   })
 
@@ -50,17 +21,39 @@ describe('SearchOverlay', () => {
     vi.restoreAllMocks()
   })
 
+  it('renders dialog when open', () => {
+    render(<SearchOverlay open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
   it('does not render dialog content when open is false', () => {
     render(<SearchOverlay open={false} onOpenChange={vi.fn()} />)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('renders title and description when open', () => {
+  it('does not render a recents chip row', () => {
+    useCitiesStore.setState({
+      cities: [
+        {
+          id: 'a',
+          name: 'Chicago',
+          country: 'US',
+          lat: 41.88,
+          lng: -87.63,
+          timezone: 'UTC',
+          addedAt: '2026-07-01T00:00:00Z',
+          isPinned: false,
+        },
+      ],
+      sortMode: 'recent',
+    })
     render(<SearchOverlay open={true} onOpenChange={vi.fn()} />)
-    expect(screen.getByText('Change city')).toBeInTheDocument()
     expect(
-      screen.getByText('Type to search worldwide, or pick a recent one below.')
-    ).toBeInTheDocument()
+      screen.queryByRole('button', { name: /^Chicago$/ })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Load weather for Chicago/ })
+    ).not.toBeInTheDocument()
   })
 
   it('closes when ESC is pressed', async () => {
@@ -73,42 +66,30 @@ describe('SearchOverlay', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 
-  it('picking a search result sets selected city + adds to recents + closes', async () => {
-    const user = userEvent.setup()
-    mockedSearchCities.mockResolvedValueOnce([paris()])
+  it('picking a result adds to cities store, sets selected city, and closes overlay', async () => {
+    vi.spyOn(geocodingModule, 'searchCities').mockResolvedValue([
+      {
+        id: 1,
+        name: 'Tokyo',
+        country: 'Japan',
+        latitude: 35.68,
+        longitude: 139.65,
+        timezone: 'Asia/Tokyo',
+      },
+    ])
     const onOpenChange = vi.fn()
-
+    const user = userEvent.setup()
     render(<SearchOverlay open={true} onOpenChange={onOpenChange} />)
+
     const input = screen.getByLabelText('Search cities')
-    await user.type(input, 'Paris')
+    await user.type(input, 'Tokyo')
+    const row = await screen.findByRole('button', { name: /Tokyo/ })
+    await user.click(row)
 
-    await waitFor(() => {
-      expect(screen.getByText('Paris')).toBeInTheDocument()
-    })
-
-    await user.click(screen.getByText('Paris'))
-
-    expect(useSelectedCityStore.getState().city?.name).toBe('Paris')
-    expect(useSelectedCityStore.getState().city?.country).toBe('France')
-    expect(useRecentCitiesStore.getState().cities[0]?.name).toBe('Paris')
-    expect(onOpenChange).toHaveBeenCalledWith(false)
-  })
-
-  it('picking a recent chip sets selected city + bumps to front + closes', async () => {
-    const user = userEvent.setup()
-    useRecentCitiesStore.setState({
-      cities: [makeCity('Berlin', 'Germany'), makeCity('Paris')],
-    })
-    const onOpenChange = vi.fn()
-
-    render(<SearchOverlay open={true} onOpenChange={onOpenChange} />)
-
-    await user.click(
-      screen.getByRole('button', { name: 'Load weather for Paris' })
-    )
-
-    expect(useSelectedCityStore.getState().city?.name).toBe('Paris')
-    expect(useRecentCitiesStore.getState().cities[0]?.name).toBe('Paris')
+    expect(
+      useCitiesStore.getState().cities.some((c) => c.name === 'Tokyo')
+    ).toBe(true)
+    expect(useSelectedCityStore.getState().city?.name).toBe('Tokyo')
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 })
