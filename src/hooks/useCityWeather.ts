@@ -206,7 +206,10 @@ export function useCityWeather(city: WeatherCity | null): UseCityWeatherResult {
       cancelled = true
       controller.abort()
     }
-  }, [city])
+    // Depend on value fields (not the object) so consumers that create city
+    // objects inline per render don't cause identity-churn refetches.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [city?.lat, city?.lng, city?.timezone, city?.name, city?.country])
 
   return state
 }

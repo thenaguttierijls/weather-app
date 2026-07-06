@@ -112,4 +112,24 @@ describe('useCityWeather', () => {
     expect(result.current.data).toBeNull()
     expect(result.current.loading).toBe(false)
   })
+
+  it('does not refetch when parent creates a new city object with identical values', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => mockOk(goodPayload())))
+    const cityA: WeatherCity = { lat: 41.88, lng: -87.63, timezone: 'America/Chicago', name: 'Chicago', country: 'United States' }
+    const cityB: WeatherCity = { lat: 41.88, lng: -87.63, timezone: 'America/Chicago', name: 'Chicago', country: 'United States' }
+
+    const { result, rerender } = renderHook(({ c }: { c: WeatherCity }) => useCityWeather(c), {
+      initialProps: { c: cityA },
+    })
+
+    await waitFor(() => expect(result.current.data).not.toBeNull())
+    const fetchCallsAfterFirst = (globalThis.fetch as unknown as { mock: { calls: unknown[] } }).mock.calls.length
+
+    rerender({ c: cityB })
+    // Give any spurious refetch a chance to fire
+    await new Promise((r) => setTimeout(r, 50))
+
+    const fetchCallsAfterRerender = (globalThis.fetch as unknown as { mock: { calls: unknown[] } }).mock.calls.length
+    expect(fetchCallsAfterRerender).toBe(fetchCallsAfterFirst)
+  })
 })
