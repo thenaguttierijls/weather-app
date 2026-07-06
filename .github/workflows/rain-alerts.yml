@@ -22,6 +22,6 @@ jobs:
         run: npm ci --omit=dev
       - name: Send rain alert if forecast qualifies
         env:
-          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ALERT_EMAIL: ${{ secrets.GMAIL }}
+          GMAIL_APP_PASSWORD: ${{ secrets.WEATHERAPP }}
         run: node scripts/send-rain-alerts.mjs
