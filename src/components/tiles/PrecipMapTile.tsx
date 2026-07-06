@@ -89,7 +89,15 @@ export function PrecipMapTile({ forecast, className }: PrecipMapTileProps) {
           attributionControl={true}
         >
           <TileLayer url={baseUrl} attribution={BASE_ATTRIBUTION} detectRetina={true} />
-          {radarUrl && <TileLayer url={radarUrl} opacity={0.7} attribution={RADAR_ATTRIBUTION} />}
+          {radarUrl && (
+            <TileLayer
+              url={radarUrl}
+              opacity={0.7}
+              attribution={RADAR_ATTRIBUTION}
+              maxNativeZoom={10}
+              maxZoom={19}
+            />
+          )}
           <CenterOnCity center={center} />
         </MapContainer>
       </div>
