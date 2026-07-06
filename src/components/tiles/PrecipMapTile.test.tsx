@@ -98,4 +98,15 @@ describe('PrecipMapTile', () => {
       expect(screen.getByText(/radar unavailable/i)).toBeInTheDocument()
     })
   })
+
+  it('skips the radar layer and shows a coverage note for regions RainViewer does not cover', async () => {
+    // Bangkok is outside RainViewer coverage
+    render(<PrecipMapTile forecast={makeForecast({ location: { name: 'Bangkok', country: 'Thailand', timezone: 'UTC', lat: 13.76, lng: 100.5 } })} />)
+    await waitFor(() => {
+      expect(screen.getByText(/live radar isn't available for this region/i)).toBeInTheDocument()
+    })
+    const layers = screen.getAllByTestId('tile-layer')
+    const radarLayer = layers.find((l) => l.getAttribute('data-url')?.includes('tilecache.rainviewer.com'))
+    expect(radarLayer).toBeUndefined()
+  })
 })

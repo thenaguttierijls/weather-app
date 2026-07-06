@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, useMap } from 'react-leaflet'
 import type { NormalizedForecast } from '@/api/types'
 import { Tile } from '@/components/tiles/Tile'
 import { logger } from '@/lib/logger'
+import { hasRadarCoverage } from '@/lib/radarCoverage'
 import { useThemeStore } from '@/stores/useThemeStore'
 
 interface PrecipMapTileProps {
@@ -73,17 +74,21 @@ export function PrecipMapTile({ forecast, className }: PrecipMapTileProps) {
   }, [])
 
   const baseUrl = theme === 'dark' ? BASE_DARK : BASE_LIGHT
-  const radarUrl = radarPath
+  const covered = hasRadarCoverage(location.lat, location.lng)
+  const radarUrl = radarPath && covered
     ? `https://tilecache.rainviewer.com${radarPath}/512/{z}/{x}/{y}/2/1_1.png`
     : null
   const center: [number, number] = [location.lat, location.lng]
+  const note = !covered
+    ? "Live radar isn't available for this region — showing the base map."
+    : error
 
   return (
     <Tile title="Precipitation map" icon={MapIcon} ariaLabel="Precipitation map" className={className}>
       <div className="overflow-hidden rounded-xl">
         <MapContainer
           center={center}
-          zoom={12}
+          zoom={11}
           scrollWheelZoom={false}
           style={{ height: 420, width: '100%' }}
           attributionControl={true}
@@ -101,8 +106,8 @@ export function PrecipMapTile({ forecast, className }: PrecipMapTileProps) {
           <CenterOnCity center={center} />
         </MapContainer>
       </div>
-      {error && (
-        <p className="mt-2 text-xs text-muted-foreground">{error}</p>
+      {note && (
+        <p className="mt-2 text-xs text-muted-foreground">{note}</p>
       )}
     </Tile>
   )
