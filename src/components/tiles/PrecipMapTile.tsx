@@ -83,12 +83,12 @@ export function PrecipMapTile({ forecast, className }: PrecipMapTileProps) {
       <div className="overflow-hidden rounded-xl">
         <MapContainer
           center={center}
-          zoom={10}
+          zoom={12}
           scrollWheelZoom={false}
           style={{ height: 420, width: '100%' }}
           attributionControl={true}
         >
-          <TileLayer url={baseUrl} attribution={BASE_ATTRIBUTION} />
+          <TileLayer url={baseUrl} attribution={BASE_ATTRIBUTION} detectRetina={true} />
           {radarUrl && <TileLayer url={radarUrl} opacity={0.7} attribution={RADAR_ATTRIBUTION} />}
           <CenterOnCity center={center} />
         </MapContainer>
