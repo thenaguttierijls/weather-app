@@ -88,6 +88,11 @@ describe('Hero', () => {
     expect(screen.getByText(/Feels like 20°C/)).toBeInTheDocument()
   })
 
+  it('renders the local time in the city\'s timezone', () => {
+    render(<Hero forecast={makeForecast()} />)
+    expect(screen.getByLabelText(/Local time \d{1,2}:\d{2}\s?(AM|PM)/)).toBeInTheDocument()
+  })
+
   it('sets an aria-label on the big temperature', () => {
     render(<Hero forecast={makeForecast()} />)
     expect(screen.getByLabelText(/Temperature 22 degrees Celsius/)).toBeInTheDocument()

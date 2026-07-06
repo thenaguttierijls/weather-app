@@ -1,9 +1,10 @@
 import { Moon, Sun } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 import type { NormalizedForecast } from '@/api/types'
 import { WeatherIcon } from '@/components/WeatherIcon'
 import { getHeroGradient } from '@/components/hero/gradient'
-import { formatTemp } from '@/lib/formatters'
+import { formatLocalTime, formatTemp } from '@/lib/formatters'
 import type { TempUnit } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { getWmoInfo } from '@/lib/wmoCodes'
@@ -21,6 +22,12 @@ function unitToTemp(unit: 'metric' | 'imperial'): TempUnit {
 export function Hero({ forecast }: HeroProps) {
   const unit = useUnitStore((state) => state.unit)
   const tempUnit = unitToTemp(unit)
+  const [now, setNow] = useState(() => new Date())
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 60_000)
+    return () => window.clearInterval(id)
+  }, [])
 
   const { current, daily, location } = forecast
   const isDay = current.isDay
@@ -29,6 +36,9 @@ export function Hero({ forecast }: HeroProps) {
     weatherCode: current.weatherCode,
     isDay,
   })
+  const localTime = location.timezone
+    ? formatLocalTime(now.toISOString(), location.timezone)
+    : null
 
   const today = daily[0]
   const bigTemp = formatTemp(current.tempC, tempUnit)
@@ -60,12 +70,19 @@ export function Hero({ forecast }: HeroProps) {
       />
 
       <div className="relative flex w-full flex-col items-start justify-center gap-4 px-6 py-10 md:w-3/5 md:px-12 md:py-16">
-        <div className="flex items-baseline gap-3">
-          <h2 className="text-3xl font-medium tracking-tight md:text-4xl">
-            {location.name || 'Unknown location'}
-          </h2>
-          {location.country && (
-            <span className="text-sm text-white/70">{location.country}</span>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-baseline gap-3">
+            <h2 className="text-3xl font-medium tracking-tight md:text-4xl">
+              {location.name || 'Unknown location'}
+            </h2>
+            {location.country && (
+              <span className="text-sm text-white/70">{location.country}</span>
+            )}
+          </div>
+          {localTime && (
+            <div className="text-sm text-white/70 tabular-nums" aria-label={`Local time ${localTime}`}>
+              {localTime}
+            </div>
           )}
         </div>
 

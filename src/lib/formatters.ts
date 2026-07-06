@@ -36,6 +36,17 @@ export function formatTime(isoOrHour: string, timezone: string): string {
   }).format(date)
 }
 
+export function formatLocalTime(iso: string, timezone: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return iso
+  return new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: timezone,
+  }).format(date)
+}
+
 export function formatWeekday(iso: string, timezone: string): string {
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return iso

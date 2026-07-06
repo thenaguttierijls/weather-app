@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   celsiusToFahrenheit,
   formatHumidity,
+  formatLocalTime,
   formatPercent,
   formatRelativeTime,
   formatTemp,
@@ -76,6 +77,20 @@ describe('formatTime', () => {
 
   it('returns input when the date is unparseable', () => {
     expect(formatTime('not-a-date', 'America/Chicago')).toBe('not-a-date')
+  })
+})
+
+describe('formatLocalTime', () => {
+  it.each<[string, string, string]>([
+    ['2026-07-02T15:30:00Z', 'UTC', '3:30 PM'],
+    ['2026-07-02T00:15:00Z', 'UTC', '12:15 AM'],
+    ['2026-07-02T12:00:00Z', 'UTC', '12:00 PM'],
+  ])('formats %s in %s as %s', (iso, tz, expected) => {
+    expect(formatLocalTime(iso, tz)).toBe(expected)
+  })
+
+  it('returns input when the date is unparseable', () => {
+    expect(formatLocalTime('not-a-date', 'UTC')).toBe('not-a-date')
   })
 })
 
