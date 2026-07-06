@@ -1,10 +1,10 @@
 {
   "city": {
-    "name": "Bangkok",
-    "country": "Thailand",
-    "lat": 13.7563,
-    "lng": 100.5018,
-    "timezone": "Asia/Bangkok"
+    "name": "Siem Reap",
+    "country": "Cambodia",
+    "lat": 13.3634,
+    "lng": 103.8564,
+    "timezone": "Asia/Phnom_Penh"
   },
   "thresholds": {
     "precipMmMin": 5,
