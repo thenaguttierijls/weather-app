@@ -17,8 +17,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+      - name: Install production deps
+        run: npm ci --omit=dev
       - name: Send rain alert if forecast qualifies
         env:
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         run: node scripts/send-rain-alerts.mjs

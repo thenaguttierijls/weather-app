@@ -1,13 +1,12 @@
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import nodemailer from 'nodemailer'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const CONFIG_PATH = join(__dirname, 'rain-alerts.config.json')
 
 const OPEN_METEO_URL = 'https://api.open-meteo.com/v1/forecast'
-const RESEND_URL = 'https://api.resend.com/emails'
-const FROM_ADDRESS = 'onboarding@resend.dev'
 
 const WMO_LABEL = {
   0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
@@ -72,27 +71,25 @@ async function fetchForecast(city) {
   }
 }
 
-async function sendEmail({ apiKey, to, subject, text }) {
-  const res = await fetch(RESEND_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ from: FROM_ADDRESS, to, subject, text }),
+async function sendEmail({ user, pass, to, subject, text }) {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user, pass },
   })
-  if (!res.ok) {
-    const body = await res.text().catch(() => '')
-    throw new Error(`Resend ${res.status} ${body}`)
-  }
-  return res.json()
+  const info = await transporter.sendMail({
+    from: `Weather Alerts <${user}>`,
+    to,
+    subject,
+    text,
+  })
+  return info
 }
 
 async function main() {
-  const apiKey = process.env.RESEND_API_KEY
   const alertEmail = process.env.ALERT_EMAIL
-  if (!apiKey) throw new Error('RESEND_API_KEY is not set')
+  const gmailPassword = process.env.GMAIL_APP_PASSWORD
   if (!alertEmail) throw new Error('ALERT_EMAIL is not set')
+  if (!gmailPassword) throw new Error('GMAIL_APP_PASSWORD is not set')
 
   const config = JSON.parse(await readFile(CONFIG_PATH, 'utf8'))
   const daily = await fetchForecast(config.city)
@@ -104,7 +101,13 @@ async function main() {
   }
 
   const { subject, text } = buildEmail(config.city, daily, decision)
-  await sendEmail({ apiKey, to: alertEmail, subject, text })
+  await sendEmail({
+    user: alertEmail,
+    pass: gmailPassword,
+    to: alertEmail,
+    subject,
+    text,
+  })
   console.log(`Alert sent for ${config.city.name}: ${subject}`)
 }
 
