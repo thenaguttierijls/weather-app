@@ -61,7 +61,9 @@ const paris: WeatherCity = {
 
 describe('useWeather', () => {
   beforeEach(() => {
+    localStorage.clear()
     vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -108,7 +110,7 @@ describe('useWeather', () => {
     })
   })
 
-  it('sets an error message on fetch failure', async () => {
+  it('sets an error message on fetch failure when no cache exists', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline') }))
     const { result } = renderHook(() => useWeather(chicago))
 
@@ -118,8 +120,118 @@ describe('useWeather', () => {
 
     expect(result.current.data).toBeNull()
     expect(result.current.loading).toBe(false)
+    expect(result.current.isStale).toBe(false)
     expect(typeof result.current.error).toBe('string')
     expect(result.current.error).not.toContain('Error:')
+  })
+
+  it('persists a successful fetch to localStorage', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => mockOk(goodPayload())))
+    const { result } = renderHook(() => useWeather(chicago))
+
+    await waitFor(() => {
+      expect(result.current.data).not.toBeNull()
+    })
+
+    const raw = localStorage.getItem('weather-app:last-forecast')
+    expect(raw).not.toBeNull()
+    const parsed = JSON.parse(raw!)
+    expect(Array.isArray(parsed.entries)).toBe(true)
+    expect(parsed.entries.length).toBe(1)
+    expect(parsed.entries[0].key).toBe('41.880,-87.630')
+    expect(typeof parsed.entries[0].fetchedAt).toBe('string')
+  })
+
+  it('returns cached forecast + isStale=true when the fetch fails and a cache exists', async () => {
+    const cachedAt = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+    localStorage.setItem(
+      'weather-app:last-forecast',
+      JSON.stringify({
+        entries: [
+          {
+            key: '41.880,-87.630',
+            fetchedAt: cachedAt,
+            forecast: {
+              location: {
+                name: 'Chicago',
+                country: 'United States',
+                timezone: 'America/Chicago',
+                lat: 41.88,
+                lng: -87.63,
+              },
+              current: {
+                tempC: 18, apparentC: 17, humidity: 55, windKph: 10, windDir: 180,
+                weatherCode: 1, isDay: true, precip: 0, uv: 4,
+              },
+              hourly: [],
+              daily: [],
+            },
+          },
+        ],
+      })
+    )
+
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline') }))
+    const { result } = renderHook(() => useWeather(chicago))
+
+    await waitFor(() => {
+      expect(result.current.data).not.toBeNull()
+    })
+
+    expect(result.current.isStale).toBe(true)
+    expect(result.current.staleSince).toBe(cachedAt)
+    expect(result.current.error).toBeNull()
+    expect(result.current.data?.location.name).toBe('Chicago')
+  })
+
+  it('clears stale state after a subsequent successful refetch', async () => {
+    const cachedAt = new Date(Date.now() - 5 * 60 * 1000).toISOString()
+    localStorage.setItem(
+      'weather-app:last-forecast',
+      JSON.stringify({
+        entries: [
+          {
+            key: '41.880,-87.630',
+            fetchedAt: cachedAt,
+            forecast: {
+              location: {
+                name: 'Chicago', country: 'US', timezone: 'America/Chicago', lat: 41.88, lng: -87.63,
+              },
+              current: {
+                tempC: 18, apparentC: 17, humidity: 55, windKph: 10, windDir: 180,
+                weatherCode: 1, isDay: true, precip: 0, uv: 4,
+              },
+              hourly: [], daily: [],
+            },
+          },
+        ],
+      })
+    )
+
+    let shouldFail = true
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        if (shouldFail) throw new Error('offline')
+        return mockOk(goodPayload())
+      })
+    )
+    const { result } = renderHook(() => useWeather(chicago))
+
+    await waitFor(() => {
+      expect(result.current.isStale).toBe(true)
+    })
+
+    shouldFail = false
+    act(() => {
+      result.current.refetch()
+    })
+
+    await waitFor(() => {
+      expect(result.current.isStale).toBe(false)
+    })
+    expect(result.current.staleSince).toBeNull()
+    expect(result.current.error).toBeNull()
   })
 
   it('refetch triggers another fetch', async () => {

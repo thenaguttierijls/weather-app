@@ -71,7 +71,7 @@ export function TrendChartTile({ forecast, className }: TrendChartTileProps) {
       {rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">Trend data unavailable.</p>
       ) : (
-        <div className="h-[180px] w-full text-primary" role="img" aria-label="Daily high and low temperature trend chart">
+        <div className="h-[180px] w-full text-primary" role="img" aria-label="Five-day high and low temperature trend">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={rows} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" vertical={false} />

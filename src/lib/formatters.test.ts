@@ -4,6 +4,7 @@ import {
   celsiusToFahrenheit,
   formatHumidity,
   formatPercent,
+  formatRelativeTime,
   formatTemp,
   formatTime,
   formatWeekday,
@@ -86,6 +87,31 @@ describe('formatWeekday', () => {
 
   it('returns input when the date is unparseable', () => {
     expect(formatWeekday('nope', 'UTC')).toBe('nope')
+  })
+})
+
+describe('formatRelativeTime', () => {
+  const now = new Date('2026-07-06T12:00:00Z')
+
+  it.each<[string, string]>([
+    ['2026-07-06T11:59:30Z', 'just now'],
+    ['2026-07-06T11:59:00Z', '1 minute ago'],
+    ['2026-07-06T11:55:00Z', '5 minutes ago'],
+    ['2026-07-06T11:00:00Z', '1 hour ago'],
+    ['2026-07-06T09:00:00Z', '3 hours ago'],
+    ['2026-07-05T12:00:00Z', '1 day ago'],
+    ['2026-07-03T12:00:00Z', '3 days ago'],
+  ])('formats %s relative to now as %s', (iso, expected) => {
+    expect(formatRelativeTime(iso, now)).toBe(expected)
+  })
+
+  it('returns "just now" when the input is not a real date', () => {
+    expect(formatRelativeTime('not-a-date', now)).toBe('just now')
+  })
+
+  it('uses the current time when no `now` is passed', () => {
+    const recent = new Date(Date.now() - 30_000).toISOString()
+    expect(formatRelativeTime(recent)).toBe('just now')
   })
 })
 

@@ -35,8 +35,12 @@ describe('RecentCities', () => {
     render(<RecentCities onSelect={vi.fn()} />)
 
     expect(screen.getByText('Recent')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Paris' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Berlin' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Load weather for Paris' })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Load weather for Berlin' })
+    ).toBeInTheDocument()
   })
 
   it('calls onSelect with the city when a chip is clicked', async () => {
@@ -46,7 +50,9 @@ describe('RecentCities', () => {
     useRecentCitiesStore.setState({ cities: [paris] })
 
     render(<RecentCities onSelect={onSelect} />)
-    await user.click(screen.getByRole('button', { name: 'Paris' }))
+    await user.click(
+      screen.getByRole('button', { name: 'Load weather for Paris' })
+    )
 
     expect(onSelect).toHaveBeenCalledWith(paris)
   })

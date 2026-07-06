@@ -4,7 +4,9 @@ import { toast } from 'sonner'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { HeaderSearchButton } from '@/components/HeaderSearchButton'
 import { Hero } from '@/components/hero/Hero'
+import { OfflineIndicator } from '@/components/OfflineIndicator'
 import { SearchOverlay } from '@/components/search/SearchOverlay'
+import { StaleBanner } from '@/components/StaleBanner'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { UnitToggle } from '@/components/UnitToggle'
 import { ErrorState } from '@/components/states/ErrorState'
@@ -20,6 +22,7 @@ import { UvTile } from '@/components/tiles/UvTile'
 import { WindTile } from '@/components/tiles/WindTile'
 import { Toaster } from '@/components/ui/sonner'
 import { useGeolocation } from '@/hooks/useGeolocation'
+import { useOnline } from '@/hooks/useOnline'
 import { useTimezoneCity } from '@/hooks/useTimezoneCity'
 import { useWeather, type WeatherCity } from '@/hooks/useWeather'
 import { useRecentCitiesStore } from '@/stores/useRecentCitiesStore'
@@ -32,6 +35,8 @@ function App() {
   const recents = useRecentCitiesStore((s) => s.cities)
   const [searchOpen, setSearchOpen] = useState(false)
   const deniedToastedRef = useRef(false)
+  const online = useOnline()
+  const wasOnlineRef = useRef(online)
 
   const city: WeatherCity =
     selectedCity ??
@@ -59,7 +64,19 @@ function App() {
     }
   }, [selectedCity, recents.length, geo.status, timezoneCity.name])
 
-  const { data, loading, error, refetch } = useWeather(city)
+  const { data, loading, error, refetch, isStale, staleSince } = useWeather(city)
+
+  useEffect(() => {
+    const wasOnline = wasOnlineRef.current
+    wasOnlineRef.current = online
+    if (wasOnline === online) return
+    if (online) {
+      toast.info("You're back online.")
+      refetch()
+    } else {
+      toast.info("You're offline. Showing what we have.")
+    }
+  }, [online, refetch])
 
   return (
     <ErrorBoundary>
@@ -67,12 +84,14 @@ function App() {
         <header className="flex items-center justify-between border-b border-border px-4 py-4 md:px-8">
           <h1 className="text-lg font-semibold">Weather App</h1>
           <div className="flex items-center gap-1">
+            {!online && <OfflineIndicator />}
             <HeaderSearchButton onClick={() => setSearchOpen(true)} />
             <UnitToggle />
             <ThemeToggle />
           </div>
         </header>
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-8">
+          {isStale && staleSince && <StaleBanner staleSince={staleSince} />}
           {loading && !data && <LoadingState variant="full-page" message="Loading weather…" />}
           {!loading && error && (
             <ErrorState

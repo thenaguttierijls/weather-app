@@ -103,7 +103,9 @@ describe('SearchOverlay', () => {
 
     render(<SearchOverlay open={true} onOpenChange={onOpenChange} />)
 
-    await user.click(screen.getByRole('button', { name: 'Paris' }))
+    await user.click(
+      screen.getByRole('button', { name: 'Load weather for Paris' })
+    )
 
     expect(useSelectedCityStore.getState().city?.name).toBe('Paris')
     expect(useRecentCitiesStore.getState().cities[0]?.name).toBe('Paris')

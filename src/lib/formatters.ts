@@ -45,6 +45,23 @@ export function formatWeekday(iso: string, timezone: string): string {
   }).format(date)
 }
 
+export function formatRelativeTime(iso: string, now: Date = new Date()): string {
+  const then = new Date(iso)
+  if (Number.isNaN(then.getTime())) return 'just now'
+  const diffMs = now.getTime() - then.getTime()
+  if (diffMs < 60_000) return 'just now'
+  const minutes = Math.round(diffMs / 60_000)
+  if (minutes < 60) {
+    return minutes === 1 ? '1 minute ago' : `${minutes} minutes ago`
+  }
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) {
+    return hours === 1 ? '1 hour ago' : `${hours} hours ago`
+  }
+  const days = Math.round(hours / 24)
+  return days === 1 ? '1 day ago' : `${days} days ago`
+}
+
 const WIND_DIRECTIONS = [
   'N', 'NNE', 'NE', 'ENE',
   'E', 'ESE', 'SE', 'SSE',

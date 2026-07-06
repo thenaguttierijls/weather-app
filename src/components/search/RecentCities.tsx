@@ -31,7 +31,8 @@ export function RecentCities({ onSelect }: RecentCitiesProps) {
               <button
                 type="button"
                 onClick={() => onSelect(city)}
-                className="py-1 transition-colors hover:text-primary focus-visible:outline-none focus-visible:text-primary"
+                aria-label={`Load weather for ${name}`}
+                className="rounded-full py-1 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {name}
               </button>

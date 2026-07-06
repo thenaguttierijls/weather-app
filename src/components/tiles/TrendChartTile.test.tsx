@@ -36,12 +36,12 @@ describe('TrendChartTile', () => {
     render(<TrendChartTile forecast={makeForecast()} />)
     expect(screen.getByRole('region', { name: 'Five-day temperature trend' })).toBeInTheDocument()
     expect(screen.getByText(/5-day trend/i)).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: /trend chart/i })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /temperature trend/i })).toBeInTheDocument()
   })
 
   it('exposes a chart region with the expected aria label', () => {
     render(<TrendChartTile forecast={makeForecast()} />)
-    const chart = screen.getByRole('img', { name: /trend chart/i })
+    const chart = screen.getByRole('img', { name: /temperature trend/i })
     expect(chart).toBeInTheDocument()
     expect(chart.className).toContain('text-primary')
   })
@@ -49,7 +49,7 @@ describe('TrendChartTile', () => {
   it('shows the fallback when daily data is empty', () => {
     render(<TrendChartTile forecast={makeForecast({ daily: [] })} />)
     expect(screen.getByText(/unavailable/i)).toBeInTheDocument()
-    expect(screen.queryByRole('img', { name: /trend chart/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: /temperature trend/i })).not.toBeInTheDocument()
   })
 
   it('renders inside the shared Tile chrome', () => {
