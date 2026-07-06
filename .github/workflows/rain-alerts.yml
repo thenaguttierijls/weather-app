@@ -1,0 +1,24 @@
+name: Daily rain alerts
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # 00:00 UTC = 07:00 Asia/Bangkok
+  workflow_dispatch: # allow manual runs from the Actions tab
+
+concurrency:
+  group: rain-alerts
+  cancel-in-progress: false
+
+jobs:
+  send-alert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Send rain alert if forecast qualifies
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+        run: node scripts/send-rain-alerts.mjs

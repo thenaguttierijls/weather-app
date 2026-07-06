@@ -1,0 +1,13 @@
+{
+  "city": {
+    "name": "Bangkok",
+    "country": "Thailand",
+    "lat": 13.7563,
+    "lng": 100.5018,
+    "timezone": "Asia/Bangkok"
+  },
+  "thresholds": {
+    "precipMmMin": 5,
+    "thunderstormCodes": [95, 96, 99]
+  }
+}
