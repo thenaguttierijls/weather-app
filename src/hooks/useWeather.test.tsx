@@ -286,4 +286,28 @@ describe('useWeather', () => {
     })
     expect(result.current.loading).toBe(false)
   })
+
+  it('caps the persisted cache at 15 entries', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => mockOk(goodPayload())))
+
+    for (let i = 0; i < 20; i++) {
+      const city: WeatherCity = {
+        lat: i * 0.5,
+        lng: i * 0.5,
+        timezone: 'UTC',
+        name: `City${i}`,
+        country: 'X',
+      }
+      const { unmount } = renderHook(() => useWeather(city))
+      await waitFor(() => {
+        const raw = window.localStorage.getItem('weather-app:last-forecast')
+        expect(raw).not.toBeNull()
+      })
+      unmount()
+    }
+
+    const raw = window.localStorage.getItem('weather-app:last-forecast')
+    const parsed = JSON.parse(raw!) as { entries: unknown[] }
+    expect(parsed.entries).toHaveLength(15)
+  })
 })
